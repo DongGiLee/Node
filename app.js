@@ -145,6 +145,33 @@ var authUser = function(database, id, password, callback) {
 }
 
 
+//사용자를 추가하는 함수
+var addUser = function(database, id, password, name, callback) {
+	console.log('addUser 호출됨 : ' + id + ', ' + password + ', ' + name);
+	
+	// users 컬렉션 참조
+	var users = database.collection('users');
+
+	// id, password, username을 이용해 사용자 추가
+	users.insertMany([{"id":id, "password":password, "name":name}], function(err, result) {
+		if (err) {  // 에러 발생 시 콜백 함수를 호출하면서 에러 객체 전달
+			callback(err, null);
+			return;
+		}
+		
+        // 에러 아닌 경우, 콜백 함수를 호출하면서 결과 객체 전달
+        if (result.insertedCount > 0) {
+	        console.log("사용자 레코드 추가됨 : " + result.insertedCount);
+        } else {
+            console.log("추가된 레코드가 없음.");
+        }
+        
+	    callback(null, result);
+	     
+	});
+}
+
+
 // 404 에러 페이지 처리
 var errorHandler = expressErrorHandler({
  static: {
@@ -155,6 +182,20 @@ var errorHandler = expressErrorHandler({
 app.use( expressErrorHandler.httpError(404) );
 app.use( errorHandler );
 
+//===== 서버 시작 =====//
+
+// 프로세스 종료 시에 데이터베이스 연결 해제
+process.on('SIGTERM', function () {
+    console.log("프로세스가 종료됩니다.");
+    app.close();
+});
+
+app.on('close', function () {
+	console.log("Express 서버 객체가 종료됩니다.");
+	if (database) {
+		database.close();
+	}
+});
 
 // Express 서버 시작
 http.createServer(app).listen(app.get('port'), function(){
