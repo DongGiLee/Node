@@ -15,7 +15,8 @@ const express = require('express')
 const bodyParser = require('body-parser')
     , cookieParser = require('cookie-parser')
     , static = require('serve-static')
-    
+    , errorHandler = require('errorhandler')
+
 
 // 에러핸들러 모듈 사용
 const expressErrorHandler = require('express-error-handler');
@@ -23,11 +24,36 @@ const expressErrorHandler = require('express-error-handler');
 // Session 미들웨어 불러오기
 const expressSession = require('express-session');
 
-// 파일 업로드용 미들웨어
-const multer = require('multer');
-const fs = require('fs');
+// Passport 사용
+var passport = require('passport');
+var flash = require('connect-flash');
 
-// 클라이언트에서 ajax로 요청시 CORS 지원, (다중서버 접속)
-const cors = require('cors');
+var config = require('./config');
+
+var database = require('./database/database');
+
+var route_loader = require('./routes/route_loader');
 
 let app = express();
+
+app.set('views',__dirname+'/views');
+app.set('view engins','ejs');
+
+app.set('port', process.env.PORT || 3000);
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+app.use('/public', static(path.join(__dirname, 'public')));
+
+app.use(cookieParser());
+
+app.use(expressSession({
+	secret:'my key',
+	resave:true,
+	saveUninitialized:true
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(flash());
